@@ -1,8 +1,13 @@
 import { useState } from "react";
 import Sidebar from "./components/Sidebar/Sidebar";
 import DashboardPage from "./pages/dashboard/Dashboard";
-import MarketPage from "./pages/market/Market";
+import MarketPage from "./pages/market/MarketPage";
 import { ThemeProvider } from "next-themes";
+import ProfilePage from "./pages/setting/profile/ProfilePage";
+import WatchlistPage from "./pages/watchlist/WatchlistPage";
+import NotificationPage from "./pages/notification/NotificationPage";
+import AccountSecurityPage from "./pages/setting/security/AccountSecurityPage";
+import AlertPage from "./pages/alert/AlertPage";
 
 export default function App() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
@@ -14,12 +19,16 @@ export default function App() {
         return <DashboardPage />;
       case "market":
         return <MarketPage />;
-      case "funding":
-        return <div>Funding Page</div>;
-      case "support":
-        return <div>Support Page</div>;
-      case "settings":
-        return <div>Settings Page</div>;
+      case "alert":
+        return <AlertPage />;
+      case "profile":
+        return <ProfilePage />;
+      case "watchlist":
+        return <WatchlistPage />;
+      case "account-security":
+        return <AccountSecurityPage />;
+      case "notification":
+        return <NotificationPage />;
       default:
         return <DashboardPage />;
     }
