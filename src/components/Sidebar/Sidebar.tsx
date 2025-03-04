@@ -18,7 +18,6 @@ export default function Sidebar({
   const [activePage, setActivePage] = useState("portfolio");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-
   const menuItems = [
     { id: "portfolio", label: "Portfolio", icon: ChartPie },
     { id: "market", label: "Market", icon: Globe },
@@ -37,7 +36,12 @@ export default function Sidebar({
     <aside className="border-r bg-background/50 backdrop-blur min-h-screen w-64 transition-all duration-300 flex flex-col justify-between overflow-y-auto">
       <div className="flex flex-col flex-grow">
         <div className="flex h-16 items-center border-b px-4">
-          <span className="font-bold whitespace-nowrap">StockAlert</span>
+          <img
+            src="/icon.png"
+            alt="Market Sentry Icon"
+            className="h-8 w-8 mr-2"
+          />
+          <span className="font-bold whitespace-nowrap">Market Sentry</span>
         </div>
 
         <div className="space-y-4 px-2 flex-grow">
