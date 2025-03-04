@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import {
   Table,
@@ -7,120 +8,172 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal } from "lucide-react";
-
-const vaults = [
-  {
-    name: "Bitcoin",
-    symbol: "BTC",
-    price: "$13,643.21",
-    daily: "+$213.8",
-    balance: "$13,954.04",
-    apy: "8.56%",
-    state: "Fixed",
-    startDate: "05.10.2023",
-    liquidity: "high",
-  },
-  {
-    name: "USDT",
-    symbol: "USDT",
-    price: "$1.00",
-    daily: "+$45.1",
-    balance: "$3,954.04",
-    apy: "5.44%",
-    state: "Fixed",
-    startDate: "12.03.2023",
-    liquidity: "medium",
-  },
-  {
-    name: "Ethereum",
-    symbol: "ETH",
-    price: "$2,123.87",
-    daily: "+$13.5",
-    balance: "$3,954.04",
-    apy: "4.12%",
-    state: "Flexible",
-    startDate: "21.01.2023",
-    liquidity: "low",
-  },
-];
+import { getListAsset } from "@/services/asset";
 
 const getCryptoIcon = (symbol: string) =>
   `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
 
 export default function MarketPage() {
-    return (
-      <div className="mt-6 p-6">
+  const [vaults, setVaults] = useState<any[]>([]);
+  const [priceChanges, setPriceChanges] = useState<{
+    [key: string]: "up" | "down" | null;
+  }>({});
+  const [loading, setLoading] = useState<boolean>(true);
+  const wsEndpoint = "ws://103.151.53.134:8081/assets/prices";
+
+  useEffect(() => {
+    const fetchAssets = async () => {
+      try {
+        const data = await getListAsset({
+          sort: "createdAt",
+          order: "asc",
+          page: 1,
+          paging: 20,
+          type: "CRYPTO",
+        });
+
+        if (Array.isArray(data.data)) {
+          setVaults(data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch assets:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssets();
+
+    const ws = new WebSocket(wsEndpoint);
+
+    ws.onopen = () => {
+      console.log("WebSocket connected");
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const liveData = JSON.parse(event.data);
+
+        if (typeof liveData !== "object" || liveData === null) {
+          console.error("Unexpected WebSocket data format:", liveData);
+          return;
+        }
+
+        console.log("Received WebSocket Data:", liveData);
+
+        setVaults((prevVaults) => {
+          return prevVaults.map((vault) => {
+            const newPrice = liveData[vault.identity.toLowerCase()];
+            if (!newPrice) return vault;
+
+            const oldPrice = vault.current_price_usd;
+            const priceChange =
+              newPrice > oldPrice ? "up" : newPrice < oldPrice ? "down" : null;
+
+            if (priceChange) {
+              setPriceChanges((prev) => ({
+                ...prev,
+                [vault.identity]: priceChange,
+              }));
+
+              // Remove color after 0.5s
+              setTimeout(() => {
+                setPriceChanges((prev) => ({
+                  ...prev,
+                  [vault.identity]: null,
+                }));
+              }, 500);
+            }
+
+            return {
+              ...vault,
+              current_price_usd: newPrice,
+            };
+          });
+        });
+      } catch (error) {
+        console.error("Error parsing WebSocket message:", error);
+      }
+    };
+
+    ws.onerror = (error) => console.error("WebSocket Error:", error);
+    ws.onclose = () => console.log("WebSocket disconnected");
+
+    return () => ws.close();
+  }, []);
+
+  return (
+    <div className="mt-6 p-6">
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Vault</TableHead>
-              <TableHead>Daily</TableHead>
-              <TableHead>Balance ↓</TableHead>
-              <TableHead>APY ↓</TableHead>
-              <TableHead>State</TableHead>
-              <TableHead>Start date</TableHead>
-              <TableHead>Liquidity</TableHead>
-              <TableHead></TableHead>
+              <TableHead>Symbol</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Explorer</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {vaults.map((vault) => (
-              <TableRow key={vault.symbol}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <img src={getCryptoIcon(vault.symbol)} alt={vault.name} />
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">{vault.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {vault.price}
+            {vaults.length > 0 ? (
+              vaults.map((vault) => (
+                <TableRow key={vault.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <img
+                          src={getCryptoIcon(vault.symbol)}
+                          alt={vault.name}
+                        />
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">{vault.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {vault.symbol}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell className="text-green-500">{vault.daily}</TableCell>
-                <TableCell>{vault.balance}</TableCell>
-                <TableCell>{vault.apy}</TableCell>
-                <TableCell>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${
-                      vault.state === "Fixed"
-                        ? "bg-yellow-500/10 text-yellow-500"
-                        : "bg-green-500/10 text-green-500"
+                  </TableCell>
+
+                  <TableCell
+                    className={`transition-all duration-500 ${
+                      priceChanges[vault.identity] === "up"
+                        ? "text-green-500"
+                        : priceChanges[vault.identity] === "down"
+                        ? "text-red-500"
+                        : ""
                     }`}
                   >
-                    {vault.state}
-                  </span>
-                </TableCell>
-                <TableCell>{vault.startDate}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`h-1.5 w-3 rounded-full ${
-                          i <
-                          (vault.liquidity === "high"
-                            ? 3
-                            : vault.liquidity === "medium"
-                            ? 2
-                            : 1)
-                            ? "bg-primary"
-                            : "bg-muted"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                    {vault.current_price_usd} $
+                  </TableCell>
+
+                  <TableCell>
+                    <a
+                      href={vault.explorer}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${
+                        vault.state === "Fixed"
+                          ? "bg-yellow-500/10 text-yellow-500"
+                          : "bg-green-500/10 text-green-500"
+                      }`}
+                    >
+                      Open Explorer
+                    </a>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center">
+                  No data available
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
-      </div>
-    );
+      )}
+    </div>
+  );
 }
