@@ -40,8 +40,7 @@ const alerts: Alert[] = [
 
 export default function AlertPage() {
   return (
-    <div className="flex-1 overflow-auto">
-      <div className="container max-w-6xl mx-auto px-4 py-8 space-y-8">
+    <div className="mt-6 p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Price Alerts</h1>
@@ -156,7 +155,6 @@ export default function AlertPage() {
             ))}
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }
