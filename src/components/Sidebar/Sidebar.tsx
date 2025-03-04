@@ -9,47 +9,47 @@ import {
   ChartPie,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SidebarProps } from "@/types/SidebarProps";
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
-export default function Sidebar({
-  setSelectedPage,
-}: SidebarProps): JSX.Element {
-  const [activePage, setActivePage] = useState("portfolio");
+export default function Sidebar(): JSX.Element {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-
   const menuItems = [
-    { id: "portfolio", label: "Portfolio", icon: ChartPie },
-    { id: "market", label: "Market", icon: Globe },
-    { id: "alert", label: "My Alerts", icon: CircleAlert },
-    { id: "notification", label: "Notifications", icon: Bell },
-    { id: "watchlist", label: "Watchlist", icon: Star },
+    { path: "/", label: "Portfolio", icon: ChartPie },
+    { path: "/market", label: "Market", icon: Globe },
+    { path: "/alert", label: "My Alerts", icon: CircleAlert },
+    { path: "/notification", label: "Notifications", icon: Bell },
+    { path: "/watchlist", label: "Watchlist", icon: Star },
   ];
 
   const settingsItems = [
-    { id: "profile", label: "Profile" },
-    { id: "account-security", label: "Account Security" },
-    { id: "preferences", label: "Preferences" },
+    { path: "/profile", label: "Profile" },
+    { path: "/account-security", label: "Account Security" },
+    { path: "/preferences", label: "Preferences" },
   ];
 
   return (
     <aside className="border-r bg-background/50 backdrop-blur min-h-screen w-64 transition-all duration-300 flex flex-col justify-between overflow-y-auto">
       <div className="flex flex-col flex-grow">
         <div className="flex h-16 items-center border-b px-4">
-          <span className="font-bold whitespace-nowrap">StockAlert</span>
+          <img
+            src="/icon.png"
+            alt="Market Sentry Icon"
+            className="h-8 w-8 mr-2"
+          />
+          <span className="font-bold whitespace-nowrap">Market Sentry</span>
         </div>
 
         <div className="space-y-4 px-2 flex-grow">
-          {menuItems.map(({ id, label, icon: Icon }) => (
+          {menuItems.map(({ path, label, icon: Icon }) => (
             <Button
-              key={id}
-              variant={activePage === id ? "default" : "ghost"}
+              key={path}
+              variant={location.pathname === path ? "default" : "ghost"}
               className="w-full justify-start gap-2"
-              onClick={() => {
-                setActivePage(id);
-                setSelectedPage(id);
-              }}
+              onClick={() => navigate(path)}
             >
               <Icon className="h-4 w-4" />
               <span>{label}</span>
@@ -72,16 +72,13 @@ export default function Sidebar({
             </Button>
 
             {isSettingsOpen && (
-              <div className="ml-6 space-y-4">
-                {settingsItems.map(({ id, label }) => (
+              <div className="ml-6 space-y-2">
+                {settingsItems.map(({ path, label }) => (
                   <Button
-                    key={id}
-                    variant={activePage === id ? "default" : "ghost"}
+                    key={path}
+                    variant={location.pathname === path ? "default" : "ghost"}
                     className="w-full justify-start text-sm gap-2"
-                    onClick={() => {
-                      setActivePage(id);
-                      setSelectedPage(id);
-                    }}
+                    onClick={() => navigate(path)}
                   >
                     {label}
                   </Button>

@@ -1,38 +1,8 @@
-import { useState } from "react";
 import Sidebar from "./components/Sidebar/Sidebar";
-import MarketPage from "./pages/market/MarketPage";
 import { ThemeProvider } from "next-themes";
-import ProfilePage from "./pages/setting/profile/ProfilePage";
-import WatchlistPage from "./pages/watchlist/WatchlistPage";
-import NotificationPage from "./pages/notification/NotificationPage";
-import AccountSecurityPage from "./pages/setting/security/AccountSecurityPage";
-import AlertPage from "./pages/alert/AlertPage";
-import PortfolioPage from "./pages/portfolio/PortfolioPage";
+import AppRoutes from "./routers/router";
 
 export default function App() {
-  const [selectedPage, setSelectedPage] = useState("portfolio");
-
-  const renderPage = () => {
-    switch (selectedPage) {
-      case "portfolio":
-        return <PortfolioPage />;
-      case "market":
-        return <MarketPage />;
-      case "alert":
-        return <AlertPage />;
-      case "profile":
-        return <ProfilePage />;
-      case "watchlist":
-        return <WatchlistPage />;
-      case "account-security":
-        return <AccountSecurityPage />;
-      case "notification":
-        return <NotificationPage />;
-      default:
-        return <PortfolioPage />;
-    }
-  };
-
   return (
     <ThemeProvider attribute="class" defaultTheme="dark">
       <div className="min-h-screen bg-white text-black dark:bg-black dark:text-white transition-colors">
@@ -43,10 +13,10 @@ export default function App() {
             transition: "all 0.3s ease",
           }}
         >
-          <Sidebar
-            setSelectedPage={setSelectedPage}
-          />
-          <main className="p-6">{renderPage()}</main>
+          <Sidebar />
+          <main className="p-6">
+            <AppRoutes />
+          </main>
         </div>
       </div>
     </ThemeProvider>
