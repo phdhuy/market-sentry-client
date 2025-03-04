@@ -1,5 +1,3 @@
-"use client"
-
 import { Plus, ArrowUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,9 +24,7 @@ const watchlistData: WatchlistItem[] = [
 
 export default function WatchlistPage() {
   return (
-    <div className="h-screen flex">
-      <div className="flex-1 p-6">
-        <div className="max-w-6xl mx-auto space-y-6">
+    <div className="mt-6 p-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold">Watchlists</h1>
             <Button variant="outline" size="sm">
@@ -87,8 +83,6 @@ export default function WatchlistPage() {
               </Table>
             </div>
           </Tabs>
-        </div>
-      </div>
     </div>
   )
 }
