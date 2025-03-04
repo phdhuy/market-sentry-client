@@ -1,4 +1,3 @@
-import { useState } from "react";
 import Sidebar from "./components/Sidebar/Sidebar";
 import MarketPage from "./pages/market/MarketPage";
 import { ThemeProvider } from "next-themes";
@@ -8,31 +7,9 @@ import NotificationPage from "./pages/notification/NotificationPage";
 import AccountSecurityPage from "./pages/setting/security/AccountSecurityPage";
 import AlertPage from "./pages/alert/AlertPage";
 import PortfolioPage from "./pages/portfolio/PortfolioPage";
+import { Routes, Route } from "react-router-dom";
 
 export default function App() {
-  const [selectedPage, setSelectedPage] = useState("portfolio");
-
-  const renderPage = () => {
-    switch (selectedPage) {
-      case "portfolio":
-        return <PortfolioPage />;
-      case "market":
-        return <MarketPage />;
-      case "alert":
-        return <AlertPage />;
-      case "profile":
-        return <ProfilePage />;
-      case "watchlist":
-        return <WatchlistPage />;
-      case "account-security":
-        return <AccountSecurityPage />;
-      case "notification":
-        return <NotificationPage />;
-      default:
-        return <PortfolioPage />;
-    }
-  };
-
   return (
     <ThemeProvider attribute="class" defaultTheme="dark">
       <div className="min-h-screen bg-white text-black dark:bg-black dark:text-white transition-colors">
@@ -43,10 +20,19 @@ export default function App() {
             transition: "all 0.3s ease",
           }}
         >
-          <Sidebar
-            setSelectedPage={setSelectedPage}
-          />
-          <main className="p-6">{renderPage()}</main>
+          <Sidebar />
+          <main className="p-6">
+            <Routes>
+              <Route path="/" element={<PortfolioPage />} />
+              <Route path="/market" element={<MarketPage />} />
+              <Route path="/alert" element={<AlertPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/watchlist" element={<WatchlistPage />} />
+              <Route path="/account-security" element={<AccountSecurityPage />} />
+              <Route path="/notification" element={<NotificationPage />} />
+              <Route path="*" element={<PortfolioPage />} /> {/* Fallback Route */}
+            </Routes>
+          </main>
         </div>
       </div>
     </ThemeProvider>
