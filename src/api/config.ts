@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://103.151.53.134:8081/api",
+  baseURL: "https://api.marketsentry.site/api",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

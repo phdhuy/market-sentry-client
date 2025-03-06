@@ -19,7 +19,7 @@ export default function MarketPage() {
     [key: string]: "up" | "down" | null;
   }>({});
   const [loading, setLoading] = useState<boolean>(true);
-  const wsEndpoint = "ws://103.151.53.134:8081/assets/prices";
+  const wsEndpoint = "wss://marketsentry.site/assets/prices";
 
   useEffect(() => {
     const fetchAssets = async () => {
