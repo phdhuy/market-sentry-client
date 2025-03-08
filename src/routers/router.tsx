@@ -27,8 +27,8 @@ const AppRoutes = () => {
       path: "/",
       element: <RootLayout />,
       children: [
+        { index: true, element: <MarketPage /> },
         { path: "market", element: <MarketPage /> },
-
         {
           element: <PrivateRoute />,
           children: [
