@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { Eye, EyeOff } from "lucide-react";
@@ -11,6 +11,12 @@ const schema = yup.object().shape({
   password: yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
 });
 
+interface FormData {
+  fullName: string;
+  email: string;
+  password: string;
+}
+
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -18,11 +24,11 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({
+  } = useForm<FormData>({
     resolver: yupResolver(schema),
   });
 
-  const onSubmit = (data) => {
+  const onSubmit: SubmitHandler<FormData> = (data) => {
     console.log("User Registered:", data);
   };
 
