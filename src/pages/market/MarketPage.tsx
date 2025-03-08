@@ -76,7 +76,6 @@ export default function MarketPage() {
                 [vault.identity]: priceChange,
               }));
 
-              // Remove color after 0.5s
               setTimeout(() => {
                 setPriceChanges((prev) => ({
                   ...prev,
