@@ -8,47 +8,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getListAsset } from "@/services/asset";
-
-const getCryptoIcon = (symbol: string) =>
-  `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
+import { useAssetList } from "./hooks/use-asset-list";
+import { AssetInfoResponse } from "@/api/asset-api";
+import { getCryptoIcon, WS_ENDPOINT } from "@/constants";
 
 export default function MarketPage() {
-  const [vaults, setVaults] = useState<any[]>([]);
+  const { data, isLoading } = useAssetList({
+    sort: "createdAt",
+    order: "asc",
+    page: 1,
+    paging: 20,
+    type: "CRYPTO",
+  });
+
+  const [assets, setAssets] = useState<AssetInfoResponse[]>([]);
   const [priceChanges, setPriceChanges] = useState<{
     [key: string]: "up" | "down" | null;
   }>({});
-  const [loading, setLoading] = useState<boolean>(true);
-  const wsEndpoint = "wss://marketsentry.site/assets/prices";
 
   useEffect(() => {
-    const fetchAssets = async () => {
-      try {
-        const data = await getListAsset({
-          sort: "createdAt",
-          order: "asc",
-          page: 1,
-          paging: 20,
-          type: "CRYPTO",
-        });
+    if (!data?.data) return;
+    setAssets(data.data);
 
-        if (Array.isArray(data.data)) {
-          setVaults(data.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch assets:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const ws = new WebSocket(WS_ENDPOINT);
 
-    fetchAssets();
-
-    const ws = new WebSocket(wsEndpoint);
-
-    ws.onopen = () => {
-      console.log("WebSocket connected");
-    };
+    ws.onopen = () => console.log("WebSocket connected");
 
     ws.onmessage = (event) => {
       try {
@@ -61,36 +45,32 @@ export default function MarketPage() {
 
         console.log("Received WebSocket Data:", liveData);
 
-        setVaults((prevVaults) => {
-          return prevVaults.map((vault) => {
-            const newPrice = liveData[vault.identity.toLowerCase()];
-            if (!newPrice) return vault;
+        setAssets((prevAssets) =>
+          prevAssets.map((asset) => {
+            const newPrice = liveData[asset.identity.toLowerCase()];
+            if (!newPrice) return asset;
 
-            const oldPrice = vault.current_price_usd;
+            const oldPrice = asset.current_price_usd;
             const priceChange =
               newPrice > oldPrice ? "up" : newPrice < oldPrice ? "down" : null;
 
             if (priceChange) {
               setPriceChanges((prev) => ({
                 ...prev,
-                [vault.identity]: priceChange,
+                [asset.identity]: priceChange,
               }));
 
-              // Remove color after 0.5s
               setTimeout(() => {
                 setPriceChanges((prev) => ({
                   ...prev,
-                  [vault.identity]: null,
+                  [asset.identity]: null,
                 }));
               }, 500);
             }
 
-            return {
-              ...vault,
-              current_price_usd: newPrice,
-            };
-          });
-        });
+            return { ...asset, current_price_usd: newPrice };
+          })
+        );
       } catch (error) {
         console.error("Error parsing WebSocket message:", error);
       }
@@ -99,12 +79,14 @@ export default function MarketPage() {
     ws.onerror = (error) => console.error("WebSocket Error:", error);
     ws.onclose = () => console.log("WebSocket disconnected");
 
-    return () => ws.close();
-  }, []);
+    return () => {
+      ws.close();
+    };
+  }, [data?.data]);
 
   return (
     <div className="mt-6 p-6">
-      {loading ? (
+      {isLoading ? (
         <p>Loading...</p>
       ) : (
         <Table>
@@ -116,21 +98,21 @@ export default function MarketPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {vaults.length > 0 ? (
-              vaults.map((vault) => (
-                <TableRow key={vault.id}>
+            {assets.length > 0 ? (
+              assets.map((asset) => (
+                <TableRow key={asset.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
                         <img
-                          src={getCryptoIcon(vault.symbol)}
-                          alt={vault.name}
+                          src={getCryptoIcon(asset.symbol)}
+                          alt={asset.name}
                         />
                       </Avatar>
                       <div>
-                        <div className="font-medium">{vault.name}</div>
+                        <div className="font-medium">{asset.name}</div>
                         <div className="text-xs text-muted-foreground">
-                          {vault.symbol}
+                          {asset.symbol}
                         </div>
                       </div>
                     </div>
@@ -138,26 +120,22 @@ export default function MarketPage() {
 
                   <TableCell
                     className={`transition-all duration-500 ${
-                      priceChanges[vault.identity] === "up"
+                      priceChanges[asset.identity] === "up"
                         ? "text-green-500"
-                        : priceChanges[vault.identity] === "down"
+                        : priceChanges[asset.identity] === "down"
                         ? "text-red-500"
                         : ""
                     }`}
                   >
-                    {vault.current_price_usd} $
+                    {asset.current_price_usd} $
                   </TableCell>
 
                   <TableCell>
                     <a
-                      href={vault.explorer}
+                      href={asset.explorer}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${
-                        vault.state === "Fixed"
-                          ? "bg-yellow-500/10 text-yellow-500"
-                          : "bg-green-500/10 text-green-500"
-                      }`}
+                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs text-green-500`}
                     >
                       Open Explorer
                     </a>
@@ -166,7 +144,7 @@ export default function MarketPage() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="text-center">
+                <TableCell colSpan={3} className="text-center">
                   No data available
                 </TableCell>
               </TableRow>

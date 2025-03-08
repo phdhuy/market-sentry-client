@@ -18,8 +18,8 @@ export default function Sidebar(): JSX.Element {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const menuItems = [
-    { path: "/", label: "Portfolio", icon: ChartPie },
     { path: "/market", label: "Market", icon: Globe },
+    { path: "/portfolio", label: "Portfolio", icon: ChartPie },
     { path: "/alert", label: "My Alerts", icon: CircleAlert },
     { path: "/notification", label: "Notifications", icon: Bell },
     { path: "/watchlist", label: "Watchlist", icon: Star },
@@ -28,7 +28,6 @@ export default function Sidebar(): JSX.Element {
   const settingsItems = [
     { path: "/profile", label: "Profile" },
     { path: "/account-security", label: "Account Security" },
-    { path: "/preferences", label: "Preferences" },
   ];
 
   return (

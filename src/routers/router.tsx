@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { useRoutes } from "react-router-dom";
 import PortfolioPage from "../pages/portfolio/PortfolioPage";
 import MarketPage from "../pages/market/MarketPage";
 import AlertPage from "../pages/alert/AlertPage";
@@ -7,25 +7,45 @@ import WatchlistPage from "../pages/watchlist/WatchlistPage";
 import AccountSecurityPage from "../pages/setting/security/AccountSecurityPage";
 import NotificationPage from "../pages/notification/NotificationPage";
 import PrivateRoute from "./utils";
+import RootLayout from "@/layouts/RootLayout";
+import AuthLayout from "@/layouts/AuthLayout";
+import LoginPage from "@/pages/login/LoginPage";
+import RegisterPage from "@/pages/register/RegisterPage";
+import NotFoundPage from "@/pages/error/404";
 
 const AppRoutes = () => {
-  return (
-    <Routes>
+  const routes = useRoutes([
+    {
+      path: "/",
+      element: <AuthLayout />,
+      children: [
+        { path: "login", element: <LoginPage /> },
+        { path: "register", element: <RegisterPage /> },
+      ],
+    },
+    {
+      path: "/",
+      element: <RootLayout />,
+      children: [
+        { path: "market", element: <MarketPage /> },
 
-      <Route element={<PrivateRoute />}>
-        <Route path="/" element={<PortfolioPage />} />
-        <Route path="/market" element={<MarketPage />} />
-        <Route path="/alert" element={<AlertPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/watchlist" element={<WatchlistPage />} />
-        <Route path="/account-security" element={<AccountSecurityPage />} />
-        <Route path="/notification" element={<NotificationPage />} />
-      </Route>
+        {
+          element: <PrivateRoute />,
+          children: [
+            { path: "portfolio", element: <PortfolioPage /> },
+            { path: "alert", element: <AlertPage /> },
+            { path: "profile", element: <ProfilePage /> },
+            { path: "watchlist", element: <WatchlistPage /> },
+            { path: "account-security", element: <AccountSecurityPage /> },
+            { path: "notification", element: <NotificationPage /> },
+          ],
+        },
+      ],
+    },
+    { path: "*", element: <NotFoundPage /> },
+  ]);
 
-
-      <Route path="*" element={<PortfolioPage />} />
-    </Routes>
-  );
+  return routes;
 };
 
 export default AppRoutes;
