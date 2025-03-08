@@ -3,23 +3,26 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { Eye, EyeOff } from "lucide-react";
-import { yupResolver } from '@hookform/resolvers/yup';
+import { yupResolver } from "@hookform/resolvers/yup";
+import { InferType } from "yup";
 
 const schema = yup.object().shape({
   email: yup.string().email("Invalid email format").required("Email is required"),
   password: yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
 });
 
+type LoginForm = InferType<typeof schema>;
+
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({ resolver: yupResolver(schema) });
+  } = useForm<LoginForm>({ resolver: yupResolver(schema) });
 
-  const onSubmit = (data) => {
+  const onSubmit = (data: LoginForm) => {
     console.log("Login Data:", data);
   };
 
