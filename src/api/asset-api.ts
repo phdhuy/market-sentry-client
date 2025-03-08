@@ -20,10 +20,13 @@ export type AssetInfoResponse = {
 };
 
 export const assetApi = {
-  getList: async (params: AssetQueryParams): Promise<ApiResponse<AssetInfoResponse[]>> => {
-    const response = await api.get<ApiResponse<AssetInfoResponse[]>>("/v1/assets", { params });
+  getList: async (
+    params: AssetQueryParams
+  ): Promise<ApiResponse<AssetInfoResponse[]>> => {
+    const response = await api.get<ApiResponse<AssetInfoResponse[]>>(
+      "/v1/assets",
+      { params }
+    );
     return response.data;
   },
 };
-
-
