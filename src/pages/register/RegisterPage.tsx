@@ -77,9 +77,9 @@ export default function RegisterPage() {
         <div>
           <label className="block text-sm font-medium">Email</label>
           <input
-            type="email"
             {...register("email")}
-            className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-gray-900"
+            type="email"
+            className="w-full p-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-100 text-gray-900"
             placeholder="Enter your email"
           />
           <p className="text-red-500 text-sm">{errors.email?.message}</p>
@@ -91,7 +91,7 @@ export default function RegisterPage() {
             <input
               type={showPassword ? "text" : "password"}
               {...register("password")}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-gray-900"
+              className="w-full p-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-100 text-gray-900"
               placeholder="Create a password"
             />
             <button
@@ -99,7 +99,11 @@ export default function RegisterPage() {
               className="absolute inset-y-0 right-3 flex items-center opacity-70 hover:opacity-100 transition"
               onClick={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {showPassword ? (
+                <EyeOff size={20} color="black" />
+              ) : (
+                <Eye size={20} color="black" />
+              )}
             </button>
           </div>
           <p className="text-red-500 text-sm">{errors.password?.message}</p>
@@ -111,7 +115,7 @@ export default function RegisterPage() {
             <input
               type={showConfirmPassword ? "text" : "password"}
               {...register("confirmPassword")}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-gray-900"
+              className="w-full p-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-100 text-gray-900"
               placeholder="Confirm your password"
             />
             <button
@@ -119,7 +123,11 @@ export default function RegisterPage() {
               className="absolute inset-y-0 right-3 flex items-center opacity-70 hover:opacity-100 transition"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             >
-              {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {showPassword ? (
+                <EyeOff size={20} color="black" />
+              ) : (
+                <Eye size={20} color="black" />
+              )}{" "}
             </button>
           </div>
           <p className="text-red-500 text-sm">
