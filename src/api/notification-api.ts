@@ -15,6 +15,10 @@ export type NotificationResponse = {
   is_read: boolean;
 };
 
+export type CountUnreadNotificationRespone = {
+  count: number;
+};
+
 export const notificationApi = {
   getList: async (
     params: NotificationQueryParams
@@ -24,6 +28,15 @@ export const notificationApi = {
       {
         params,
       }
+    );
+    return response.data;
+  },
+
+  countUnread: async (): Promise<
+    ApiResponse<CountUnreadNotificationRespone>
+  > => {
+    const response = await api.get<ApiResponse<CountUnreadNotificationRespone>>(
+      "/v1/notifications/count-unread"
     );
     return response.data;
   },
