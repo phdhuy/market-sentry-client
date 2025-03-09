@@ -11,17 +11,26 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useCountUnreadNotification } from "@/hooks/use-count-unread-notification";
 
 export default function Sidebar(): JSX.Element {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  const { data } = useCountUnreadNotification();
+  const count = data?.data.count ?? 0;
+
   const menuItems = [
     { path: "/market", label: "Market", icon: Globe },
     { path: "/portfolio", label: "Portfolio", icon: ChartPie },
     { path: "/alert", label: "My Alerts", icon: CircleAlert },
-    { path: "/notification", label: "Notifications", icon: Bell },
+    {
+      path: "/notification",
+      label: "Notifications",
+      icon: Bell,
+      count,
+    },
     { path: "/watchlist", label: "Watchlist", icon: Star },
   ];
 
@@ -43,15 +52,20 @@ export default function Sidebar(): JSX.Element {
         </div>
 
         <div className="space-y-4 px-2 flex-grow">
-          {menuItems.map(({ path, label, icon: Icon }) => (
+          {menuItems.map(({ path, label, icon: Icon, count }) => (
             <Button
               key={path}
               variant={location.pathname === path ? "default" : "ghost"}
-              className="w-full justify-start gap-2"
+              className="w-full justify-start gap-2 relative"
               onClick={() => navigate(path)}
             >
               <Icon className="h-4 w-4" />
               <span>{label}</span>
+              {typeof count === "number" && count > 0 && (
+                <span className="absolute right-4 top-1 text-xs font-bold bg-red-500 text-white rounded-full px-2 py-0.5">
+                  {count}
+                </span>
+              )}
             </Button>
           ))}
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Avatar } from "@/components/ui/avatar";
 import {
   Table,
@@ -14,6 +15,7 @@ import { AssetInfoResponse } from "@/api/asset-api";
 import { getCryptoIcon, WS_ENDPOINT } from "@/constants";
 
 export default function MarketPage() {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const { data, isLoading } = useAssetList({
     sort: "createdAt",
@@ -96,6 +98,7 @@ export default function MarketPage() {
                 <TableHead>Symbol</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>Explorer</TableHead>
+                <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -140,6 +143,12 @@ export default function MarketPage() {
                       >
                         Open Explorer
                       </a>
+                    </TableCell>
+
+                    <TableCell>
+                      <Button onClick={() => navigate(`/assets/${asset.id}`)}>
+                        View Details
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))

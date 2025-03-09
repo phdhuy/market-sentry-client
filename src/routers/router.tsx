@@ -12,6 +12,7 @@ import AuthLayout from "@/layouts/AuthLayout";
 import LoginPage from "@/pages/login/LoginPage";
 import RegisterPage from "@/pages/register/RegisterPage";
 import NotFoundPage from "@/pages/error/404";
+import AssetDetailPage from "@/pages/market/AssetDetailPage";
 
 const AppRoutes = () => {
   const routes = useRoutes([
@@ -29,6 +30,7 @@ const AppRoutes = () => {
       children: [
         { index: true, element: <MarketPage /> },
         { path: "market", element: <MarketPage /> },
+        { path: "assets/:id", element: <AssetDetailPage /> },
         {
           element: <PrivateRoute />,
           children: [

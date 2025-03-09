@@ -9,6 +9,11 @@ export type AssetQueryParams = {
   type?: string;
 };
 
+export type AssetPriceHistoryQueryParams = {
+  asset_id: string;
+  interval: string;
+};
+
 export type AssetInfoResponse = {
   id: string;
   identity: string;
@@ -26,6 +31,15 @@ export const assetApi = {
     const response = await api.get<ApiResponse<AssetInfoResponse[]>>(
       "/v1/assets",
       { params }
+    );
+    return response.data;
+  },
+
+  getDetail: async (
+    assetId: string
+  ): Promise<ApiResponse<AssetInfoResponse>> => {
+    const response = await api.get<ApiResponse<AssetInfoResponse>>(
+      `/v1/assets/${assetId}`
     );
     return response.data;
   },
