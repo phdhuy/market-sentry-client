@@ -1,11 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { Eye, EyeOff } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import { authApi, RegisterRequest } from "@/api/auth-api";
+import { authApi, RegisterRequest, RegisterResponse } from "@/api/auth-api";
 import { ApiResponse } from "@/types/api";
 import { AxiosError } from "axios";
 
@@ -30,6 +30,7 @@ interface FormData {
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
 
   const {
     register,
@@ -40,7 +41,7 @@ export default function RegisterPage() {
   });
 
   const mutation = useMutation<
-    ApiResponse<any>,
+    ApiResponse<RegisterResponse>,
     AxiosError<{ message?: string }>,
     RegisterRequest
   >({
@@ -48,6 +49,7 @@ export default function RegisterPage() {
     onSuccess: (data) => {
       console.log("User Registered:", data);
       alert("Registration successful!");
+      navigate("/login");
     },
     onError: (error) => {
       console.error(

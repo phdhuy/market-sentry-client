@@ -6,9 +6,9 @@ import { Eye, EyeOff } from "lucide-react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { InferType } from "yup";
 import { useMutation } from "@tanstack/react-query";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import { ApiResponse } from "@/types/api";
-import { authApi, LoginRequest } from "@/api/auth-api";
+import { authApi, LoginRequest, TokenResponse } from "@/api/auth-api";
 
 const schema = yup.object().shape({
   email: yup
@@ -34,7 +34,7 @@ export default function LoginPage() {
   } = useForm<LoginForm>({ resolver: yupResolver(schema) });
 
   const loginMutation = useMutation<
-    ApiResponse<any>,
+    ApiResponse<TokenResponse>,
     AxiosError<{ message?: string }>,
     LoginRequest
   >({
