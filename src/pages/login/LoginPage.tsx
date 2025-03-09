@@ -42,8 +42,8 @@ export default function LoginPage() {
     onSuccess: (data) => {
       console.log("User Login:", data);
       alert("Login successful!");
-      localStorage.setItem("access_token", data.data.access_token);
-      localStorage.setItem("refresh_token", data.data.refresh_token);
+      localStorage.setItem("accessToken", data.data.access_token);
+      localStorage.setItem("refreshToken", data.data.refresh_token);
       navigate("/market");
     },
     onError: (error) => {
@@ -69,7 +69,7 @@ export default function LoginPage() {
           <input
             {...register("email")}
             type="email"
-            className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-gray-900"
+            className="w-full p-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-100 text-gray-900"
             placeholder="Enter your email"
           />
           {errors.email && (
@@ -83,7 +83,7 @@ export default function LoginPage() {
             <input
               {...register("password")}
               type={showPassword ? "text" : "password"}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-gray-900"
+              className="w-full p-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-100 text-gray-900"
               placeholder="Enter your password"
             />
             <button
@@ -91,7 +91,11 @@ export default function LoginPage() {
               className="absolute inset-y-0 right-3 flex items-center opacity-70 hover:opacity-100 transition"
               onClick={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {showPassword ? (
+                <EyeOff size={20} color="black" />
+              ) : (
+                <Eye size={20} color="black" />
+              )}
             </button>
           </div>
           {errors.password && (

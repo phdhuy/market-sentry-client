@@ -8,15 +8,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { useAssetList } from "./hooks/use-asset-list";
 import { AssetInfoResponse } from "@/api/asset-api";
 import { getCryptoIcon, WS_ENDPOINT } from "@/constants";
 
 export default function MarketPage() {
+  const [page, setPage] = useState(1);
   const { data, isLoading } = useAssetList({
     sort: "createdAt",
     order: "asc",
-    page: 1,
+    page,
     paging: 20,
     type: "CRYPTO",
   });
@@ -42,8 +44,6 @@ export default function MarketPage() {
           console.error("Unexpected WebSocket data format:", liveData);
           return;
         }
-
-        console.log("Received WebSocket Data:", liveData);
 
         setAssets((prevAssets) =>
           prevAssets.map((asset) => {
@@ -89,68 +89,89 @@ export default function MarketPage() {
       {isLoading ? (
         <p>Loading...</p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Symbol</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Explorer</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {assets.length > 0 ? (
-              assets.map((asset) => (
-                <TableRow key={asset.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <img
-                          src={getCryptoIcon(asset.symbol)}
-                          alt={asset.name}
-                        />
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{asset.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {asset.symbol}
+        <>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Symbol</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Explorer</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {assets.length > 0 ? (
+                assets.map((asset) => (
+                  <TableRow key={asset.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <img
+                            src={getCryptoIcon(asset.symbol)}
+                            alt={asset.name}
+                          />
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{asset.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {asset.symbol}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </TableCell>
+                    </TableCell>
 
-                  <TableCell
-                    className={`transition-all duration-500 ${
-                      priceChanges[asset.identity] === "up"
-                        ? "text-green-500"
-                        : priceChanges[asset.identity] === "down"
-                        ? "text-red-500"
-                        : ""
-                    }`}
-                  >
-                    {asset.current_price_usd} $
-                  </TableCell>
-
-                  <TableCell>
-                    <a
-                      href={asset.explorer}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs text-green-500`}
+                    <TableCell
+                      className={`transition-all duration-500 ${
+                        priceChanges[asset.identity] === "up"
+                          ? "text-green-500"
+                          : priceChanges[asset.identity] === "down"
+                          ? "text-red-500"
+                          : ""
+                      }`}
                     >
-                      Open Explorer
-                    </a>
+                      {asset.current_price_usd} $
+                    </TableCell>
+
+                    <TableCell>
+                      <a
+                        href={asset.explorer}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center rounded-full px-2 py-1 text-xs text-green-500"
+                      >
+                        Open Explorer
+                      </a>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">
+                    No data available
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center">
-                  No data available
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+
+          {/* Pagination Controls */}
+          <div className="flex justify-between mt-4">
+            <Button
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={data?.meta?.current_page === 1}
+            >
+              Previous
+            </Button>
+            <span>
+              Page {data?.meta?.current_page} of {data?.meta?.total_pages}
+            </span>
+            <Button
+              onClick={() => setPage((prev) => prev + 1)}
+              disabled={data?.meta?.current_page === data?.meta?.total_pages}
+            >
+              Next
+            </Button>
+          </div>
+        </>
       )}
     </div>
   );
