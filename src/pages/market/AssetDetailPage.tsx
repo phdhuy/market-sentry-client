@@ -14,7 +14,6 @@ import {
   Legend,
 } from "chart.js";
 
-// Register required components for Chart.js v3+
 ChartJS.register(
   LineElement,
   PointElement,
