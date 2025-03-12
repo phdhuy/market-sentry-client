@@ -44,11 +44,10 @@ export default function Sidebar(): JSX.Element {
       <div className="flex flex-col flex-grow">
         <div className="flex h-16 items-center border-b px-4">
           <img
-            src="/icon.png"
+            src="/logo-full-bl.png"
             alt="Market Sentry Icon"
-            className="h-8 w-8 mr-2"
+            className="h-8 w-40 mr-2 justify-center"
           />
-          <span className="font-bold whitespace-nowrap">Market Sentry</span>
         </div>
 
         <div className="space-y-4 px-2 flex-grow">
