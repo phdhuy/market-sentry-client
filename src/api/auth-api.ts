@@ -40,11 +40,4 @@ export const authApi = {
     const response = await api.post("/v1/auth/sign-in", body);
     return response.data;
   },
-
-  refreshToken: async (
-    body: RefreshTokenRequest
-  ): Promise<ApiResponse<TokenResponse>> => {
-    const response = await api.post("/v1/auth/refresh-token", body);
-    return response.data;
-  },
 };
