@@ -1,43 +1,23 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Avatar } from "@/components/ui/avatar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { useAssetList } from "./hooks/use-asset-list";
-import type { AssetInfoResponse } from "@/api/asset-api";
-import { getCryptoIcon, WS_ENDPOINT } from "@/constants";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
-  ArrowUp,
-  ArrowDown,
-  Search,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState, useRef } from "react"
+import { useNavigate } from "react-router-dom"
+import { Avatar } from "@/components/ui/avatar"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { useAssetList } from "./hooks/use-asset-list"
+import type { AssetInfoResponse } from "@/api/asset-api"
+import { getCryptoIcon, WS_ENDPOINT } from "@/constants"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ChevronLeft, ChevronRight, ExternalLink, Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function MarketPage() {
-  const navigate = useNavigate();
-  const [page, setPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("createdAt");
-  const [order, setOrder] = useState<"asc" | "desc">("asc");
+  const navigate = useNavigate()
+  const [page, setPage] = useState(1)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [sortBy, setSortBy] = useState("createdAt")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
 
   const { data, isLoading } = useAssetList({
     sort: sortBy,
@@ -45,83 +25,116 @@ export default function MarketPage() {
     page,
     paging: 20,
     type: "CRYPTO",
-  });
+  })
 
-  const [assets, setAssets] = useState<AssetInfoResponse[]>([]);
-  const [priceChanges, setPriceChanges] = useState<{
-    [key: string]: "up" | "down" | null;
-  }>({});
+  const [assets, setAssets] = useState<AssetInfoResponse[]>([])
+  const priceChangesRef = useRef<{
+    [key: string]: "up" | "down" | null
+  }>({})
+  const [, forceUpdate] = useState({})
 
+  // Store the initial data when it loads
   useEffect(() => {
-    if (!data?.data) return;
-    setAssets(data.data);
+    if (!data?.data) return
+    setAssets(data.data)
+  }, [data?.data])
 
-    const ws = new WebSocket(WS_ENDPOINT);
+  // WebSocket connection for live price updates
+  useEffect(() => {
+    if (assets.length === 0) return
 
-    ws.onopen = () => console.log("WebSocket connected");
+    const ws = new WebSocket(WS_ENDPOINT)
+
+    ws.onopen = () => console.log("WebSocket connected")
 
     ws.onmessage = (event) => {
       try {
-        const liveData = JSON.parse(event.data);
+        const liveData = JSON.parse(event.data)
 
         if (typeof liveData !== "object" || liveData === null) {
-          console.error("Unexpected WebSocket data format:", liveData);
-          return;
+          console.error("Unexpected WebSocket data format:", liveData)
+          return
         }
 
+        // Update only the price values without changing the entire assets array structure
         setAssets((prevAssets) =>
           prevAssets.map((asset) => {
-            const newPrice = liveData[asset.identity.toLowerCase()];
-            if (!newPrice) return asset;
+            const newPrice = liveData[asset.identity.toLowerCase()]
+            if (!newPrice) return asset
 
-            const oldPrice = asset.current_price_usd;
-            const priceChange =
-              newPrice > oldPrice ? "up" : newPrice < oldPrice ? "down" : null;
+            const oldPrice = asset.current_price_usd
+            const priceChange = newPrice > oldPrice ? "up" : newPrice < oldPrice ? "down" : null
 
             if (priceChange) {
-              setPriceChanges((prev) => ({
-                ...prev,
+              // Use ref to avoid re-renders of the entire component
+              priceChangesRef.current = {
+                ...priceChangesRef.current,
                 [asset.identity]: priceChange,
-              }));
+              }
 
+              // Force update just to trigger the animation
+              forceUpdate({})
+
+              // Clear the price change indicator after animation completes
               setTimeout(() => {
-                setPriceChanges((prev) => ({
-                  ...prev,
+                priceChangesRef.current = {
+                  ...priceChangesRef.current,
                   [asset.identity]: null,
-                }));
-              }, 500);
+                }
+                forceUpdate({})
+              }, 500)
             }
 
-            return { ...asset, current_price_usd: newPrice };
-          })
-        );
+            // Only update the price field, keeping all other properties the same
+            return {
+              ...asset,
+              current_price_usd: newPrice,
+            }
+          }),
+        )
       } catch (error) {
-        console.error("Error parsing WebSocket message:", error);
+        console.error("Error parsing WebSocket message:", error)
       }
-    };
+    }
 
-    ws.onerror = (error) => console.error("WebSocket Error:", error);
-    ws.onclose = () => console.log("WebSocket disconnected");
+    ws.onerror = (error) => console.error("WebSocket Error:", error)
+    ws.onclose = () => console.log("WebSocket disconnected")
 
     return () => {
-      ws.close();
-    };
-  }, [data?.data]);
+      ws.close()
+    }
+  }, [assets.length])
 
   const filteredAssets = assets.filter(
     (asset) =>
       asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      asset.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
+
+  // Price display component to isolate re-renders
+  const PriceDisplay = ({ asset }: { asset: AssetInfoResponse }) => {
+    const priceChange = priceChangesRef.current[asset.identity]
+
+    return (
+      <div
+        className={`font-medium transition-all duration-500 flex items-center gap-1 ${
+          priceChange === "up" ? "text-green-500" : priceChange === "down" ? "text-red-500" : ""
+        }`}
+      >$
+        {asset.current_price_usd.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Crypto Market</h1>
-          <p className="text-muted-foreground mt-1">
-            Live prices and market data for cryptocurrencies
-          </p>
+          <p className="text-muted-foreground mt-1">Live prices and market data for cryptocurrencies</p>
         </div>
       </div>
 
@@ -149,10 +162,7 @@ export default function MarketPage() {
                   <SelectItem value="current_price_usd">Price</SelectItem>
                 </SelectContent>
               </Select>
-              <Select
-                value={order}
-                onValueChange={(value: "asc" | "desc") => setOrder(value)}
-              >
+              <Select value={order} onValueChange={(value: "asc" | "desc") => setOrder(value)}>
                 <SelectTrigger className="w-full sm:w-[120px] border-border/60 bg-background/50 focus:ring-orange-500">
                   <SelectValue placeholder="Order" />
                 </SelectTrigger>
@@ -182,70 +192,34 @@ export default function MarketPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="font-medium text-foreground">
-                      Asset
-                    </TableHead>
-                    <TableHead className="font-medium text-foreground">
-                      Price (USD)
-                    </TableHead>
-                    <TableHead className="font-medium text-foreground">
-                      Explorer
-                    </TableHead>
-                    <TableHead className="font-medium text-foreground w-[120px]">
-                      Action
-                    </TableHead>
+                    <TableHead className="font-medium text-foreground">Asset</TableHead>
+                    <TableHead className="font-medium text-foreground">Price (USD)</TableHead>
+                    <TableHead className="font-medium text-foreground">Explorer</TableHead>
+                    <TableHead className="font-medium text-foreground w-[120px]">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredAssets.length > 0 ? (
                     filteredAssets.map((asset) => (
-                      <TableRow
-                        key={asset.id}
-                        className="group hover:bg-muted/50"
-                      >
+                      <TableRow key={asset.id} className="group hover:bg-muted/50">
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-3">
                             <Avatar className="h-10 w-10 border border-border/40 bg-background">
                               <img
-                                src={
-                                  getCryptoIcon(asset.symbol) ||
-                                  "/placeholder.svg"
-                                }
+                                src={getCryptoIcon(asset.symbol)}
                                 alt={asset.name}
                                 className="object-contain"
                               />
                             </Avatar>
                             <div>
                               <div className="font-medium">{asset.name}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {asset.symbol}
-                              </div>
+                              <div className="text-xs text-muted-foreground">{asset.symbol}</div>
                             </div>
                           </div>
                         </TableCell>
 
                         <TableCell>
-                          <div
-                            className={`font-medium transition-all duration-500 flex items-center gap-1 ${
-                              priceChanges[asset.identity] === "up"
-                                ? "text-green-500"
-                                : priceChanges[asset.identity] === "down"
-                                ? "text-red-500"
-                                : ""
-                            }`}
-                          >
-                            {priceChanges[asset.identity] === "up" && (
-                              <ArrowUp className="h-3 w-3" />
-                            )}
-                            {priceChanges[asset.identity] === "down" && (
-                              <ArrowDown className="h-3 w-3" />
-                            )}
-                            $
-                            {asset.current_price_usd.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </div>
+                          <PriceDisplay asset={asset} />
                         </TableCell>
 
                         <TableCell>
@@ -273,13 +247,8 @@ export default function MarketPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell
-                        colSpan={4}
-                        className="text-center h-32 text-muted-foreground"
-                      >
-                        {searchQuery
-                          ? "No matching assets found"
-                          : "No data available"}
+                      <TableCell colSpan={4} className="text-center h-32 text-muted-foreground">
+                        {searchQuery ? "No matching assets found" : "No data available"}
                       </TableCell>
                     </TableRow>
                   )}
@@ -306,9 +275,7 @@ export default function MarketPage() {
 
           <div className="flex items-center gap-1">
             <span className="text-sm text-muted-foreground">Page</span>
-            <span className="font-medium text-sm">
-              {data.meta.current_page}
-            </span>
+            <span className="font-medium text-sm">{data.meta.current_page}</span>
             <span className="text-sm text-muted-foreground">of</span>
             <span className="font-medium text-sm">{data.meta.total_pages}</span>
           </div>
@@ -326,5 +293,5 @@ export default function MarketPage() {
         </div>
       )}
     </div>
-  );
+  )
 }
