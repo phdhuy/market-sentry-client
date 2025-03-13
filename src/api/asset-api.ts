@@ -7,6 +7,7 @@ export type AssetQueryParams = {
   page?: number;
   paging?: number;
   type?: string;
+  q?: string;
 };
 
 export type AssetPriceHistoryQueryParams = {
@@ -22,7 +23,12 @@ export type AssetInfoResponse = {
   explorer: string;
   current_price_usd: number;
   asset_type: string;
+  logo: string;
 };
+
+
+export type AssetType = "CRYPTO" | "STOCK";
+
 
 export const assetApi = {
   getList: async (
