@@ -4,27 +4,30 @@ import { Avatar } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { useAssetList } from "./hooks/use-asset-list"
-import type { AssetInfoResponse } from "@/api/asset-api"
+import type { AssetInfoResponse, AssetType } from "@/api/asset-api"
 import { getCryptoIcon, WS_ENDPOINT } from "@/constants"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronLeft, ChevronRight, ExternalLink, Search } from "lucide-react"
+import { ChevronLeft, ChevronRight, ExternalLink, Search, Coins, TrendingUp } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function MarketPage() {
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState("createdAt")
+  const [searchQuery, setSearchQuery] = useState<string>("")
+  const [sortBy, setSortBy] = useState("created_at")
   const [order, setOrder] = useState<"asc" | "desc">("asc")
+  const [assetType, setAssetType] = useState<AssetType>("CRYPTO")
 
   const { data, isLoading } = useAssetList({
     sort: sortBy,
     order: order,
     page,
     paging: 20,
-    type: "CRYPTO",
+    type: assetType,
+    q: searchQuery,
   })
 
   const [assets, setAssets] = useState<AssetInfoResponse[]>([])
@@ -111,6 +114,12 @@ export default function MarketPage() {
       asset.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
+  const handleAssetTypeChange = (value: AssetType) => {
+    setAssetType(value)
+    setPage(1) // Reset to first page when changing asset type
+    setSearchQuery("") // Clear search when changing asset type
+  }
+
   // Price display component to isolate re-renders
   const PriceDisplay = ({ asset }: { asset: AssetInfoResponse }) => {
     const priceChange = priceChangesRef.current[asset.identity]
@@ -120,7 +129,8 @@ export default function MarketPage() {
         className={`font-medium transition-all duration-500 flex items-center gap-1 ${
           priceChange === "up" ? "text-green-500" : priceChange === "down" ? "text-red-500" : ""
         }`}
-      >$
+      >
+        $
         {asset.current_price_usd.toLocaleString(undefined, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
@@ -133,27 +143,61 @@ export default function MarketPage() {
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Crypto Market</h1>
-          <p className="text-muted-foreground mt-1">Live prices and market data for cryptocurrencies</p>
+          <h1 className="text-3xl font-bold tracking-tight">Market</h1>
+          <p className="text-muted-foreground mt-1">
+            Live prices and market data for {assetType === "CRYPTO" ? "cryptocurrencies" : "stocks"}
+          </p>
+        </div>
+
+        <div className="w-full sm:w-auto border border-border/40 rounded-lg p-1 bg-muted/20 shadow-sm">
+          <Tabs
+            value={assetType}
+            onValueChange={(value) => handleAssetTypeChange(value as AssetType)}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-auto">
+              <TabsTrigger
+                value="CRYPTO"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-md border border-transparent data-[state=active]:border-orange-500/50 data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200"
+              >
+                <Coins className="w-4 h-4" />
+                Crypto
+              </TabsTrigger>
+              <TabsTrigger
+                value="STOCK"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-md border border-transparent data-[state=active]:border-orange-500/50 data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200"
+              >
+                <TrendingUp className="w-4 h-4" />
+                Stocks
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 
-      <Card className="border-border/40 shadow-sm mb-6">
-        <CardHeader className="pb-3 border-b">
+      <Card className="border border-border/30 shadow-sm rounded-xl overflow-hidden mb-6">
+        <CardHeader className="pb-3 border-b border-border/30">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <CardTitle className="text-xl">Market Overview</CardTitle>
+            <CardTitle className="text-xl flex items-center gap-2">
+              {assetType === "CRYPTO" ? (
+                <Coins className="h-5 w-5 text-orange-500" />
+              ) : (
+                <TrendingUp className="h-5 w-5 text-orange-500" />
+              )}
+              {assetType === "CRYPTO" ? "Cryptocurrency" : "Stock"} Overview
+            </CardTitle>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search assets..."
-                  className="pl-9 border-border/60 bg-background/50 focus-visible:ring-orange-500"
+                  className="pl-9 border-border/50 bg-background/50 focus-visible:ring-orange-500 rounded-md"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full sm:w-[180px] border-border/60 bg-background/50 focus:ring-orange-500">
+                <SelectTrigger className="w-full sm:w-[180px] border-border/50 bg-background/50 focus:ring-orange-500 rounded-md">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -163,7 +207,7 @@ export default function MarketPage() {
                 </SelectContent>
               </Select>
               <Select value={order} onValueChange={(value: "asc" | "desc") => setOrder(value)}>
-                <SelectTrigger className="w-full sm:w-[120px] border-border/60 bg-background/50 focus:ring-orange-500">
+                <SelectTrigger className="w-full sm:w-[120px] border-border/50 bg-background/50 focus:ring-orange-500 rounded-md">
                   <SelectValue placeholder="Order" />
                 </SelectTrigger>
                 <SelectContent>
@@ -194,7 +238,9 @@ export default function MarketPage() {
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="font-medium text-foreground">Asset</TableHead>
                     <TableHead className="font-medium text-foreground">Price (USD)</TableHead>
-                    <TableHead className="font-medium text-foreground">Explorer</TableHead>
+                    <TableHead className="font-medium text-foreground">
+                      {assetType === "CRYPTO" ? "Explorer" : "Info"}
+                    </TableHead>
                     <TableHead className="font-medium text-foreground w-[120px]">Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -206,7 +252,7 @@ export default function MarketPage() {
                           <div className="flex items-center gap-3">
                             <Avatar className="h-10 w-10 border border-border/40 bg-background">
                               <img
-                                src={getCryptoIcon(asset.symbol)}
+                                src={assetType == "CRYPTO" ? getCryptoIcon(asset.symbol) : asset.logo}
                                 alt={asset.name}
                                 className="object-contain"
                               />
@@ -224,12 +270,12 @@ export default function MarketPage() {
 
                         <TableCell>
                           <a
-                            href={asset.explorer}
+                            href={asset.explorer || `https://finance.yahoo.com/quote/${asset.symbol}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-sm text-orange-500 hover:text-orange-600 transition-colors"
                           >
-                            Explorer
+                            {assetType === "CRYPTO" ? "Explorer" : "Details"}
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         </TableCell>
@@ -237,7 +283,7 @@ export default function MarketPage() {
                         <TableCell>
                           <Button
                             onClick={() => navigate(`/assets/${asset.id}`)}
-                            className="bg-orange-500 hover:bg-orange-600 text-white shadow-sm transition-all h-9"
+                            className="bg-orange-500 hover:bg-orange-600 text-white shadow-sm transition-all h-9 border border-orange-600/20"
                             size="sm"
                           >
                             View Details
@@ -248,7 +294,7 @@ export default function MarketPage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center h-32 text-muted-foreground">
-                        {searchQuery ? "No matching assets found" : "No data available"}
+                        {searchQuery ? "No matching assets found" : `No ${assetType.toLowerCase()} data available`}
                       </TableCell>
                     </TableRow>
                   )}
@@ -267,13 +313,13 @@ export default function MarketPage() {
             size="sm"
             onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
             disabled={data.meta.current_page === 1}
-            className="border-border/60 bg-background/50"
+            className="border-border/50 bg-background/50 rounded-md hover:border-orange-500/30"
           >
             <ChevronLeft className="h-4 w-4 mr-2" />
             Previous
           </Button>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 px-3 py-1.5 border border-border/30 rounded-md bg-muted/20">
             <span className="text-sm text-muted-foreground">Page</span>
             <span className="font-medium text-sm">{data.meta.current_page}</span>
             <span className="text-sm text-muted-foreground">of</span>
@@ -285,7 +331,7 @@ export default function MarketPage() {
             size="sm"
             onClick={() => setPage((prev) => prev + 1)}
             disabled={data.meta.current_page === data.meta.total_pages}
-            className="border-border/60 bg-background/50"
+            className="border-border/50 bg-background/50 rounded-md hover:border-orange-500/30"
           >
             Next
             <ChevronRight className="h-4 w-4 ml-2" />
