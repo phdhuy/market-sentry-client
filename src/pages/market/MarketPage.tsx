@@ -17,7 +17,7 @@ export default function MarketPage() {
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState<string>("")
-  const [sortBy, setSortBy] = useState("createdAt")
+  const [sortBy, setSortBy] = useState("created_at")
   const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [assetType, setAssetType] = useState<AssetType>("CRYPTO")
 
