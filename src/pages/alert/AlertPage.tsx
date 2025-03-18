@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState } from "react";
 import {
   Plus,
   Trash2,
@@ -11,17 +11,32 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
+  Edit,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -30,47 +45,107 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogDescription,
-} from "@/components/ui/dialog"
-import { useAlertList } from "./hooks/use-alert-list"
-import { useDeleteAlert } from "./hooks/use-delete-alert"
+} from "@/components/ui/dialog";
+import { useDeleteAlert } from "./hooks/use-delete-alert";
+import { useUpdateAlert } from "./hooks/use-update-alert";
+import { useAlertList } from "./hooks/use-alert-list";
+import { AlertInfoResponse } from "@/api/alert-api";
 
 export default function AlertPage() {
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedAsset, setSelectedAsset] = useState("")
-  const [targetPrice, setTargetPrice] = useState("")
-  const [alertType, setAlertType] = useState<"above" | "below">("above")
-  const [notificationMethods, setNotificationMethods] = useState<("email" | "push")[]>(["email"])
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState("");
+  const [targetPrice, setTargetPrice] = useState("");
+  const [alertType, setAlertType] = useState<"above" | "below">("above");
+  const [notificationMethods, setNotificationMethods] = useState<
+    ("email" | "telegram")[]
+  >(["email"]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const { data, isLoading } = useAlertList({
     sort: "created_at",
     order: "desc",
-    page: 1,
-    paging: 20,
-  })
+    page: currentPage,
+    paging: 10,
+  });
 
   const deleteAlertMutation = useDeleteAlert();
+  const updateAlertMutation = useUpdateAlert({
+    onSuccess: () => {
+      setDialogOpen(false);
+      resetForm();
+    },
+  });
 
-  const toggleNotificationMethod = (method: "email" | "push") => {
+  const toggleNotificationMethod = (method: "email" | "telegram") => {
     if (notificationMethods.includes(method)) {
-      setNotificationMethods(notificationMethods.filter((m) => m !== method))
+      setNotificationMethods(notificationMethods.filter((m) => m !== method));
     } else {
-      setNotificationMethods([...notificationMethods, method])
+      setNotificationMethods([...notificationMethods, method]);
     }
-  }
+  };
 
   const handleDeleteAlert = (alertId: string) => {
     if (confirm("Are you sure you want to delete this alert?")) {
-      deleteAlertMutation.mutate(alertId)
+      deleteAlertMutation.mutate(alertId);
     }
-  }
+  };
+
+  const handleUpdateAlert = () => {
+    if (!selectedAlertId || !targetPrice) return;
+
+    const condition = alertType === "above" ? "GREATER_THAN" : "LESS_THAN";
+
+    updateAlertMutation.mutate({
+      alertId: selectedAlertId,
+      data: {
+        alert_type: "PRICE",
+        alert_condition_type: condition,
+        value: Number(targetPrice),
+        trigger_type: "ONLY_ONCE",
+        expiration_at: "2025-03-13T16:03:56.636Z",
+        alert_method_types: ["EMAIL"],
+      },
+    });
+  };
+
+  const handleEditAlert = (alert: AlertInfoResponse) => {
+    setIsEditing(true);
+    setSelectedAlertId(alert.id);
+    setSelectedAsset(alert.asset.id);
+    setTargetPrice(alert.value.toString());
+    setAlertType(
+      alert.alert_condition_type === "GREATER_THAN" ? "above" : "below"
+    );
+    setNotificationMethods(
+      alert.alert_method_types.map((method: string) =>
+        method.toLowerCase()
+      ) as ("email" | "telegram")[]
+    );
+    setDialogOpen(true);
+  };
+
+  const resetForm = () => {
+    setSelectedAlertId(null);
+    setSelectedAsset("");
+    setTargetPrice("");
+    setAlertType("above");
+    setNotificationMethods(["email"]);
+    setIsEditing(false);
+  };
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
-    })
-  }
+    });
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="container mx-auto py-10 px-4 max-w-5xl">
@@ -80,10 +155,17 @@ export default function AlertPage() {
             Price Alerts
           </h1>
           <p className="text-muted-foreground mt-2">
-            Get notified when your favorite cryptocurrencies hit your target price
+            Get notified when your favorite cryptocurrencies hit your target
+            price
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={(open) => {
+            if (!open) resetForm();
+            setDialogOpen(open);
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 rounded-full px-5">
               <Plus className="w-4 h-4 mr-2" />
@@ -92,14 +174,24 @@ export default function AlertPage() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px] rounded-xl border-border/40 shadow-xl">
             <DialogHeader>
-              <DialogTitle className="text-xl">Create New Alert</DialogTitle>
-              <DialogDescription>Set up price alerts for your selected cryptocurrency</DialogDescription>
+              <DialogTitle className="text-xl">
+                {isEditing ? "Update Alert" : "Create New Alert"}
+              </DialogTitle>
+              <DialogDescription>
+                {isEditing
+                  ? "Update your price alert settings"
+                  : "Set up price alerts for your selected cryptocurrency"}
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-6 py-4">
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Cryptocurrency</Label>
-                  <Select value={selectedAsset} onValueChange={setSelectedAsset}>
+                  <Select
+                    value={selectedAsset}
+                    onValueChange={setSelectedAsset}
+                    disabled={isEditing}
+                  >
                     <SelectTrigger className="h-11 rounded-lg border-border/60 bg-background/50 focus:ring-orange-500">
                       <SelectValue placeholder="Select cryptocurrency" />
                     </SelectTrigger>
@@ -111,7 +203,9 @@ export default function AlertPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Target Price (USDT)</Label>
+                  <Label className="text-sm font-medium">
+                    Target Price (USDT)
+                  </Label>
                   <Input
                     type="number"
                     placeholder="Enter price"
@@ -126,19 +220,35 @@ export default function AlertPage() {
                 <Label className="text-sm font-medium">Alert Type</Label>
                 <RadioGroup
                   value={alertType}
-                  onValueChange={(value) => setAlertType(value as "above" | "below")}
+                  onValueChange={(value) =>
+                    setAlertType(value as "above" | "below")
+                  }
                   className="flex flex-col sm:flex-row gap-4"
                 >
                   <div className="flex items-center space-x-2 bg-background/50 border border-border/60 rounded-lg px-4 py-3 flex-1 hover:border-green-500/30 hover:bg-green-500/5 transition-colors">
-                    <RadioGroupItem value="above" id="above" className="text-green-500" />
-                    <Label htmlFor="above" className="flex items-center gap-1.5 cursor-pointer">
+                    <RadioGroupItem
+                      value="above"
+                      id="above"
+                      className="text-green-500"
+                    />
+                    <Label
+                      htmlFor="above"
+                      className="flex items-center gap-1.5 cursor-pointer"
+                    >
                       <ArrowUp className="w-3.5 h-3.5 text-green-500" />
                       Price goes above
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2 bg-background/50 border border-border/60 rounded-lg px-4 py-3 flex-1 hover:border-red-500/30 hover:bg-red-500/5 transition-colors">
-                    <RadioGroupItem value="below" id="below" className="text-red-500" />
-                    <Label htmlFor="below" className="flex items-center gap-1.5 cursor-pointer">
+                    <RadioGroupItem
+                      value="below"
+                      id="below"
+                      className="text-red-500"
+                    />
+                    <Label
+                      htmlFor="below"
+                      className="flex items-center gap-1.5 cursor-pointer"
+                    >
                       <ArrowDown className="w-3.5 h-3.5 text-red-500" />
                       Price goes below
                     </Label>
@@ -147,7 +257,9 @@ export default function AlertPage() {
               </div>
 
               <div className="space-y-3">
-                <Label className="text-sm font-medium">Notification Methods</Label>
+                <Label className="text-sm font-medium">
+                  Notification Methods
+                </Label>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex items-center space-x-2 bg-background/50 border border-border/60 rounded-lg px-4 py-3 flex-1 hover:border-blue-500/30 transition-colors">
                     <Switch
@@ -156,7 +268,10 @@ export default function AlertPage() {
                       onCheckedChange={() => toggleNotificationMethod("email")}
                       className="data-[state=checked]:bg-blue-500"
                     />
-                    <Label htmlFor="email" className="flex items-center gap-1.5 cursor-pointer">
+                    <Label
+                      htmlFor="email"
+                      className="flex items-center gap-1.5 cursor-pointer"
+                    >
                       <Mail className="w-3.5 h-3.5 text-blue-500" />
                       Email
                     </Label>
@@ -164,11 +279,16 @@ export default function AlertPage() {
                   <div className="flex items-center space-x-2 bg-background/50 border border-border/60 rounded-lg px-4 py-3 flex-1 hover:border-purple-500/30 transition-colors">
                     <Switch
                       id="push"
-                      checked={notificationMethods.includes("push")}
-                      onCheckedChange={() => toggleNotificationMethod("push")}
+                      checked={notificationMethods.includes("telegram")}
+                      onCheckedChange={() =>
+                        toggleNotificationMethod("telegram")
+                      }
                       className="data-[state=checked]:bg-purple-500"
                     />
-                    <Label htmlFor="push" className="flex items-center gap-1.5 cursor-pointer">
+                    <Label
+                      htmlFor="push"
+                      className="flex items-center gap-1.5 cursor-pointer"
+                    >
                       <BellRing className="w-3.5 h-3.5 text-purple-500" />
                       Push Notification
                     </Label>
@@ -177,19 +297,26 @@ export default function AlertPage() {
               </div>
             </div>
             <DialogFooter>
-              {/* <Button
-                // disabled={isCreating}
+              <Button
+                onClick={isEditing ? handleUpdateAlert : () => {}}
+                disabled={
+                  updateAlertMutation.isPending ||
+                  !targetPrice ||
+                  (!isEditing && !selectedAsset)
+                }
                 className="bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/20 transition-all hover:shadow-orange-500/30 rounded-lg px-5"
               >
-                {isCreating ? (
+                {updateAlertMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Creating...
+                    {isEditing ? "Updating..." : "Creating..."}
                   </>
+                ) : isEditing ? (
+                  "Update Alert"
                 ) : (
                   "Create Alert"
                 )}
-              </Button> */}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -228,106 +355,173 @@ export default function AlertPage() {
                 </div>
               ))
           ) : data?.data && data.data.length > 0 ? (
-            data.data.map((alert) => (
-              <div
-                key={alert.id}
-                className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 rounded-xl gap-4 transition-all duration-200 ${
-                  alert.alert_status === "ACTIVE"
-                    ? "bg-background/80 border border-border/60 shadow-sm hover:shadow-md"
-                    : alert.alert_status === "TRIGGERED"
+            <>
+              {data.data.map((alert) => (
+                <div
+                  key={alert.id}
+                  className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 rounded-xl gap-4 transition-all duration-200 ${
+                    alert.alert_status === "ACTIVE"
+                      ? "bg-background/80 border border-border/60 shadow-sm hover:shadow-md"
+                      : alert.alert_status === "TRIGGERED"
                       ? "bg-green-500/5 border border-green-500/20"
                       : "bg-muted/30 border border-border/30 opacity-70"
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  {alert.alert_status === "TRIGGERED" ? (
-                    <div className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500">
-                      <CheckCircle2 className="w-5 h-5" />
-                    </div>
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500">
-                      <BellRing className="w-5 h-5" />
-                    </div>
-                  )}
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-base">{alert.asset.name}</h3>
-                      <Badge
-                        variant="outline"
-                        className={`${
-                          alert.alert_condition_type === "GREATER_THAN"
-                            ? "border-green-500/50 bg-green-500/10 text-green-600"
-                            : "border-red-500/50 bg-red-500/10 text-red-600"
-                        }`}
-                      >
-                        {alert.alert_condition_type === "GREATER_THAN" ? (
-                          <span className="flex items-center gap-1">
-                            <ArrowUp className="w-3 h-3" /> Above
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1">
-                            <ArrowDown className="w-3 h-3" /> Below
-                          </span>
-                        )}
-                      </Badge>
-                      {alert.alert_status === "TRIGGERED" && (
-                        <Badge variant="outline" className="border-green-500/50 bg-green-500/10 text-green-600">
-                          Triggered
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    {alert.alert_status === "TRIGGERED" ? (
+                      <div className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500">
+                        <BellRing className="w-5 h-5" />
+                      </div>
+                    )}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium text-base">
+                          {alert.asset.name}
+                        </h3>
+                        <Badge
+                          variant="outline"
+                          className={`${
+                            alert.alert_condition_type === "GREATER_THAN"
+                              ? "border-green-500/50 bg-green-500/10 text-green-600"
+                              : "border-red-500/50 bg-red-500/10 text-red-600"
+                          }`}
+                        >
+                          {alert.alert_condition_type === "GREATER_THAN" ? (
+                            <span className="flex items-center gap-1">
+                              <ArrowUp className="w-3 h-3" /> Above
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <ArrowDown className="w-3 h-3" /> Below
+                            </span>
+                          )}
                         </Badge>
+                        {alert.alert_status === "TRIGGERED" && (
+                          <Badge
+                            variant="outline"
+                            className="border-green-500/50 bg-green-500/10 text-green-600"
+                          >
+                            Triggered
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                        <p className="flex items-center gap-1">
+                          <span className="font-medium text-foreground">
+                            ${alert.value.toLocaleString()}
+                          </span>
+                        </p>
+                        <p className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {formatDate(alert.created_at)}
+                        </p>
+                        {alert.expiration_at && (
+                          <p className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            Expires: {formatDate(alert.expiration_at)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="flex -space-x-2">
+                      {alert.alert_method_types?.includes("EMAIL") && (
+                        <div className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500">
+                          <Mail className="w-4 h-4" />
+                        </div>
+                      )}
+                      {alert.alert_method_types?.includes("PUSH") && (
+                        <div className="w-9 h-9 flex items-center justify-center rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-500">
+                          <BellRing className="w-4 h-4" />
+                        </div>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                      <p className="flex items-center gap-1">
-                        <span className="font-medium text-foreground">${alert.value.toLocaleString()}</span>
-                      </p>
-                      <p className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {formatDate(alert.created_at)}
-                      </p>
-                      {alert.expiration_at && (
-                        <p className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          Expires: {formatDate(alert.expiration_at)}
-                        </p>
-                      )}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-orange-500 hover:bg-orange-500/10 transition-colors rounded-full h-9 w-9"
+                        onClick={() => handleEditAlert(alert)}
+                        disabled={alert.alert_status === "TRIGGERED"}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors rounded-full h-9 w-9"
+                        onClick={() => handleDeleteAlert(alert.id)}
+                        disabled={
+                          deleteAlertMutation.isPending &&
+                          deleteAlertMutation.variables === alert.id
+                        }
+                      >
+                        {deleteAlertMutation.isPending &&
+                        deleteAlertMutation.variables === alert.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </div>
+              ))}
 
-                <div className="flex items-center gap-4">
-                  <div className="flex -space-x-2">
-                    {alert.alert_method_types?.includes("EMAIL") && (
-                      <div className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500">
-                        <Mail className="w-4 h-4" />
-                      </div>
-                    )}
-                    {alert.alert_method_types?.includes("PUSH") && (
-                      <div className="w-9 h-9 flex items-center justify-center rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-500">
-                        <BellRing className="w-4 h-4" />
-                      </div>
-                    )}
-                  </div>
+              {/* Pagination */}
+              {data.meta && data.meta.total_pages > 1 && (
+                <div className="flex items-center justify-between mt-8">
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors rounded-full h-9 w-9"
-                    onClick={() => handleDeleteAlert(alert.id)}
-                    disabled={deleteAlertMutation.isPending && deleteAlertMutation.variables === alert.id}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(data.meta?.prev_page ?? 1)}
+                    disabled={
+                      currentPage === 1 || data.meta.prev_page === currentPage
+                    }
+                    className="border-border/50 bg-background/50 rounded-md hover:border-orange-500/30"
                   >
-                    {deleteAlertMutation.isPending && deleteAlertMutation.variables === alert.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
+                    <ChevronLeft className="h-4 w-4 mr-2" />
+                    Previous
+                  </Button>
+
+                  <div className="flex items-center gap-1 px-3 py-1.5 border border-border/30 rounded-md bg-muted/20">
+                    <span className="text-sm text-muted-foreground">Page</span>
+                    <span className="font-medium text-sm">{currentPage}</span>
+                    <span className="text-sm text-muted-foreground">of</span>
+                    <span className="font-medium text-sm">
+                      {data.meta.total_pages}
+                    </span>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(data.meta?.prev_page ?? 1)}
+                    disabled={
+                      currentPage === data.meta.total_pages ||
+                      data.meta.next_page === currentPage
+                    }
+                    className="border-border/50 bg-background/50 rounded-md hover:border-orange-500/30"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
-              </div>
-            ))
+              )}
+            </>
           ) : (
             <div className="text-center py-12 text-muted-foreground flex flex-col items-center bg-muted/10 rounded-xl border border-dashed border-border/40">
               <AlertCircle className="w-12 h-12 text-muted-foreground mb-3 opacity-50" />
               <p className="text-lg font-medium mb-1">No active alerts</p>
-              <p className="text-sm text-muted-foreground mb-4">Create one to get notified when prices change</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Create one to get notified when prices change
+              </p>
               <Button
                 onClick={() => setDialogOpen(true)}
                 className="bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/20 transition-all hover:shadow-orange-500/30 rounded-full px-5"
@@ -340,5 +534,5 @@ export default function AlertPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

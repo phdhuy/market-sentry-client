@@ -2,6 +2,7 @@ import { Mail, Bell, ChevronRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { useNotificationList } from "./hooks/use-notification-list";
+import { formatDateTime } from "@/common";
 
 export default function NotificationPage() {
   const { data } = useNotificationList({
@@ -36,16 +37,7 @@ export default function NotificationPage() {
                 <div className="flex-1 space-y-2">
                   <p className="text-sm font-medium">{notification.content}</p>
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <time>
-                      {new Date(notification.created_at).toLocaleTimeString(
-                        [],
-                        {
-                          hour: "numeric",
-                          minute: "2-digit",
-                          hour12: true,
-                        }
-                      )}
-                    </time>
+                    <time>{formatDateTime(notification.created_at)}</time>
                     <div className="flex items-center gap-2">
                       <>
                         <Bell className="h-4 w-4" />
