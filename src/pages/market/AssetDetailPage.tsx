@@ -32,7 +32,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useQueryClient } from "@tanstack/react-query"
 import { useAssetDetail } from "./hooks/use-asset-detail"
-import { useCreateAlert } from "./hooks/use-create-alert"
+import { useCreateAlert } from "../../hooks/use-create-alert"
 import { useParams } from "react-router-dom"
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend)
