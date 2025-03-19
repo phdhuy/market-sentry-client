@@ -1,4 +1,8 @@
-import { useMutation, UseMutationOptions, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  UseMutationOptions,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { ApiResponse } from "@/types/api";
 import {
   alertApi,
@@ -21,9 +25,9 @@ export const useUpdateAlert = (
     { alertId: string; data: CreateAlertRequest }
   >({
     mutationFn: ({ alertId, data }) => alertApi.update(alertId, data),
+    ...options,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alerts"] });
     },
-    ...options,
   });
 };

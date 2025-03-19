@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/dialog";
 import { useDeleteAlert } from "./hooks/use-delete-alert";
 import { useUpdateAlert } from "./hooks/use-update-alert";
-import { useAlertList } from "./hooks/use-alert-list";
+import { useAlertList } from "./hooks/use-get-alert-list";
 import { AlertInfoResponse } from "@/api/alert-api";
 
 export default function AlertPage() {
@@ -71,6 +71,7 @@ export default function AlertPage() {
   });
 
   const deleteAlertMutation = useDeleteAlert();
+
   const updateAlertMutation = useUpdateAlert({
     onSuccess: () => {
       setDialogOpen(false);

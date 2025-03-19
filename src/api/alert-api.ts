@@ -54,6 +54,15 @@ export const alertApi = {
     return response.data;
   },
 
+  getDetail: async (
+    alertId: string
+  ): Promise<ApiResponse<AlertInfoResponse>> => {
+    const response = await api.get<ApiResponse<AlertInfoResponse>>(
+      `/v1/alerts/${alertId}`
+    );
+    return response.data;
+  },
+
   delete: async (alertId: string): Promise<ApiResponse<void>> => {
     const response = await api.delete<ApiResponse<void>>(
       `/v1/alerts/${alertId}`
