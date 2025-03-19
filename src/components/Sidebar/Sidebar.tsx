@@ -51,7 +51,7 @@ export default function Sidebar(): JSX.Element {
 
   return (
     <aside
-      className={`border-r border-border/40 bg-background/50 backdrop-blur-sm min-h-screen flex flex-col shadow-sm transition-all duration-300 ease-in-out ${
+      className={`border-r border-border/40 bg-[hsl(var(--sidebar-background))] backdrop-blur-sm min-h-screen flex flex-col shadow-sm transition-all duration-300 ease-in-out ${
         collapsed ? "w-16" : "w-64"
       }`}
     >
