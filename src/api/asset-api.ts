@@ -8,6 +8,7 @@ export type AssetQueryParams = {
   paging?: number;
   type?: string;
   q?: string;
+  category?: string;
 };
 
 export type AssetPriceHistoryQueryParams = {

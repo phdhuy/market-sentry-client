@@ -28,6 +28,7 @@ export default function MarketPage() {
     paging: 20,
     type: assetType,
     q: searchQuery,
+    category: 'VN30',
   })
 
   const [assets, setAssets] = useState<AssetInfoResponse[]>([])
